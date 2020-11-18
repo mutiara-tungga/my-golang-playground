@@ -66,6 +66,8 @@ func main() {
 
 	// fmt.Println("success")
 
+	// Cassandra1()
+
 	Cassandra2()
 
 }
@@ -199,51 +201,59 @@ type Name struct {
 
 func Cassandra2() {
 	cluster := gocql.NewCluster("localhost:9042")
-	cluster.Keyspace = "test"
+	cluster.Keyspace = "test2"
 	cluster.Consistency = gocql.LocalOne
 	session, _ := cluster.CreateSession()
 	defer session.Close()
 
-	name := []Name{
-		{
-			FirstName: "putri",
-			LastName:  "mutiara",
-			Age:       20,
-		},
-	}
+	// name := []Name{
+	// 	{
+	// 		FirstName: "putri",
+	// 		LastName:  "mutiara",
+	// 		Age:       20,
+	// 	},
+	// }
 
-	nameJSON, err := json.Marshal(name)
+	// nameJSON, err := json.Marshal(name)
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+
+	id := "6"
+	// id := 6
+	nameString := "name 6"
+	var applied bool
+	var err error
+	res := map[string]interface{}{}
+
+	applied, err = session.Query(`INSERT INTO table1 (id, name) VALUES (?,?) if not exists`, id, nameString).MapScanCAS(res)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	id := "4"
-	nameString := string(nameJSON)
+	fmt.Println(applied)
+	fmt.Println(res)
 
-	if err := session.Query(`INSERT INTO tests (id, name) VALUES (?,?)`, id, nameString).Exec(); err != nil {
-		log.Fatal(err)
-	}
+	// var idRes string
+	// var nameRes string
 
-	var idRes string
-	var nameRes string
+	// if err := session.Query(`SELECT id, name FROM tests WHERE id = ?`, id).Scan(&idRes, &nameRes); err != nil {
+	// 	if err == gocql.ErrNotFound {
+	// 		log.Fatal("errorrr select test not founddd.....")
+	// 	}
 
-	if err := session.Query(`SELECT id, name FROM tests WHERE id = ?`, id).Scan(&idRes, &nameRes); err != nil {
-		if err == gocql.ErrNotFound {
-			log.Fatal("errorrr select test not founddd.....")
-		}
+	// 	log.Fatal("error lain ", err)
+	// }
+	// fmt.Println("id", idRes)
+	// fmt.Println("Name", nameRes)
 
-		log.Fatal("error lain ", err)
-	}
-	fmt.Println("id", idRes)
-	fmt.Println("Name", nameRes)
+	// nameResJSON := []Name{}
+	// err = json.Unmarshal([]byte(nameRes), &nameResJSON)
+	// if err != nil {
+	// 	log.Fatal("errorrr ", err)
+	// }
 
-	nameResJSON := []Name{}
-	err = json.Unmarshal([]byte(nameRes), &nameResJSON)
-	if err != nil {
-		log.Fatal("errorrr ", err)
-	}
-
-	fmt.Println(nameResJSON)
+	// fmt.Println(nameResJSON)
 }
 
 func Cassandra1() {
@@ -255,29 +265,30 @@ func Cassandra1() {
 	defer session.Close()
 
 	// insert a tweet
-	// if err := session.Query(`INSERT INTO tweet (timeline, id, text) VALUES (?, ?, ?)`,
-	// 	"me", gocql.TimeUUID(), "hello world").Exec(); err != nil {
-	// 	log.Fatal(err)
-	// }
+	if err := session.Query(`INSERT INTO tweet (timeline, id, text) VALUES (?, ?, ?)`,
+		"me", gocql.TimeUUID(), createPersonalizationRulesStmt).Exec(); err != nil {
+		log.Fatal(err)
+	}
 
 	var id gocql.UUID
 	var text string
+	var timeline string
 
 	/* Search for a specific set of records whose 'timeline' column matches
 	 * the value 'me'. The secondary index that we created earlier will be
 	 * used for optimizing the search */
-	if err := session.Query(`SELECT id, text FROM tweet WHERE text = ? LIMIT 1`,
-		"hello world").Consistency(gocql.One).Scan(&id, &text); err != nil {
+	if err := session.Query(`SELECT id, text, timeline FROM tweet WHERE id = ? LIMIT 1`,
+		"3b42995d-1015-4b62-8056-a79fdba8263a").Scan(&id, &text, &timeline); err != nil {
 		log.Fatal("errorrrr ", err)
 	}
-	fmt.Println("Tweet:", id, text)
+	fmt.Println("Tweet:", id, text, timeline)
 
 	// list all tweets
-	iter := session.Query(`SELECT id, text FROM tweet WHERE timeline = ?`, "me").Iter()
-	for iter.Scan(&id, &text) {
-		fmt.Println("Tweet:", id, text)
-	}
-	if err := iter.Close(); err != nil {
-		log.Fatal(err)
-	}
+	// iter := session.Query(`SELECT id, text FROM tweet WHERE timeline = ?`, "me").Iter()
+	// for iter.Scan(&id, &text) {
+	// 	fmt.Println("Tweet:", id, text)
+	// }
+	// if err := iter.Close(); err != nil {
+	// 	log.Fatal(err)
+	// }
 }
