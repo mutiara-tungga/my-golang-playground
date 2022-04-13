@@ -21,7 +21,7 @@ type MySQLDBOption struct {
 func main() {
 	mySQLOpt := MySQLDBOption{
 		Username: "root",
-		Password: "rootpw",
+		Password: "pass",
 		Host:     "127.0.0.1",
 		Port:     "3306",
 		Database: "test_tx_mutia",
@@ -35,34 +35,25 @@ func main() {
 	}
 
 	txHandler := NewTxHandler(db)
+	test1 := NewTest1(db)
+	test2 := NewTest2(db)
+	test3 := NewTest3(db)
 
 	err = txHandler.WithTransaction(func(tx *sql.Tx) error {
-		stmt, err := tx.Prepare("INSERT INTO test1(name) values(?)")
+		name1 := "Test 1 1"
+		err = test1.InsertTx(tx, name1)
 		if err != nil {
 			return err
 		}
 
-		_, err = stmt.Exec("Test")
+		name2 := "Test 2 1"
+		err = test2.InsertTx(tx, name2)
 		if err != nil {
 			return err
 		}
 
-		stmt2, err := tx.Prepare("INSERT INTO test2(name) values(?)")
-		if err != nil {
-			return err
-		}
-
-		_, err = stmt2.Exec("Test")
-		if err != nil {
-			return err
-		}
-
-		stmt3, err := tx.Prepare("INSERT INTO test3(name) values(?)")
-		if err != nil {
-			return err
-		}
-
-		_, err = stmt3.Exec("Test")
+		name3 := "Test 3 1"
+		err = test3.InsertTx(tx, name3)
 		if err != nil {
 			return err
 		}
@@ -71,21 +62,72 @@ func main() {
 	})
 
 	fmt.Println("error", err)
+}
 
-	// hyperlocalUserId := rand.Intn(50)
-	// areaID := rand.Intn(10)
-	// price := rand.Intn(10000)
-	// condition := rand.Intn(1)
-	// categoryId := rand.Intn(100)
-	// productState := rand.Intn(5)
-	// // row, err := self.DB.Exec(QueryHyperlocalProducts["insert_product"], hyperlocalUserId, areaId, form.Title, form.Price, form.Description, model.ProductConditionState(form.Condition), form.CategoryId, 1, model.ProductStateInt("pending_review"), 0, "")
-	// sql := "INSERT INTO hyperlocal_products(`hyperlocal_user_id`, `hyperlocal_id`, `title`, `price`, `description`, `condition`, `category_id`, `active`, `state`, `rejected_id`, `rejected_remark`, `created_at`, `updated_at`) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())"
-	// db.Exec(sql, hyperlocalUserId, areaID, "Test", price, "Description", condition, categoryId, 1, productState, "")
+type Test1 struct {
+	db *sql.DB
+}
 
-	// a, b := strconv.ParseUint("a", 10, 32)
-	// fmt.Println(a)
-	// fmt.Println(reflect.TypeOf(a))
-	// fmt.Println(b)
+func NewTest1(db *sql.DB) *Test1 {
+	return &Test1{db: db}
+}
+
+func (t *Test1) InsertTx(tx *sql.Tx, name string) error {
+	stmt, err := tx.Prepare("INSERT INTO test1(name) values(?)")
+	if err != nil {
+		return err
+	}
+
+	_, err = stmt.Exec(name)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+type Test2 struct {
+	db *sql.DB
+}
+
+func NewTest2(db *sql.DB) *Test2 {
+	return &Test2{db: db}
+}
+
+func (t *Test2) InsertTx(tx *sql.Tx, name string) error {
+	stmt, err := tx.Prepare("INSERT INTO test2(name) values(?)")
+	if err != nil {
+		return err
+	}
+
+	_, err = stmt.Exec(name)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+type Test3 struct {
+	db *sql.DB
+}
+
+func NewTest3(db *sql.DB) *Test3 {
+	return &Test3{db: db}
+}
+
+func (t *Test3) InsertTx(tx *sql.Tx, name string) error {
+	stmt, err := tx.Prepare("INSERT INTO test3(name) values(?)")
+	if err != nil {
+		return err
+	}
+
+	_, err = stmt.Exec(name)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 type TxFn func(*sql.Tx) error
